@@ -2,6 +2,9 @@ const ErrorHandler = require("../helpers/errorHandler")
 const ResponseHandler = require("../helpers/responseHandler")
 const usersModel = require("../models/users")
 const theFunc = require("../helpers/asyncCatch")
+const { snedEmail } = require("../utils/sendEmail")
+const crypto = require("crypto");
+
 const cookieOption = {
     // maxAge: 24*60*60*1000,
     expires: new Date(Date.now() + process.env.COOKIE_EXPIRE*24*60*60*1000),
@@ -232,20 +235,50 @@ module.exports.forgotPassword = (async(req, res, next)=>{
             throw obj
         }
 
-        const dbResponse = await usersModel.findOne(email)
+        var dbResponse = await usersModel.findOne({email})
 
         if(!dbResponse){
             obj = { name: "BasRequest", message: "Enter your register email address."}
             throw obj
         }
 
-        const { accessToken }  = await dbResponse.generateToken()
+        const resetToken = await dbResponse.generateResetPasswordToken()
+        await dbResponse.save({validateBeforeSave: false})
 
-        
+        const resetTokenUrl = `${req.protocol}://${req.get("host")}${process.env.API_VERSION}/users/password/reset/${resetToken}`
 
-        // const url = `http://localhost:port/`
+        const message = `Your password reset token is: \n\n ${resetTokenUrl} \n\n If you have not requested this email then, please ignore it.`;
+
+        // await snedEmail({
+        //     email: dbResponse.email,
+        //     subject: "Shop Reset Password",
+        //     message: message
+        // })
+
+        const responseHandler = new ResponseHandler(200, "We have send a link on your email", resetTokenUrl)
+        return res.send(responseHandler.generateResponse())
+    }catch(error){
+        dbResponse.resetPasswordToken = undefined
+        dbResponse.resetPasswordTokenExpire = undefined
+        await dbResponse.save({validateBeforeSave: false})
+        next(new ErrorHandler(error))
+    }
+})
+
+module.exports.changePasswordByUrl = (async(req, res, next) => {
+    try{
+
+        const urlResetToken = req.params.token
+        const hashToken = crypto.createHash(process.env.CRYPTO_HASH_ALGO).update(urlResetToken).digest("hex")
+        let obj = {}
+        const dbResponse = await usersModel.findOne({resetPasswordToken: hashToken, resetPasswordTokenExpire: {$gt: Date.now()}})
+
+        if(!dbResponse){
+            obj = {}
+        }
+        console.log(dbResponse)
 
     }catch(error){
-        next(new ErrorHandler(error))
+        return next(new ErrorHandler(error))
     }
 })

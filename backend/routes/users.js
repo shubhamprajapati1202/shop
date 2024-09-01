@@ -14,7 +14,8 @@ router.post("/login", userController.loginUser)
 router.post("/logout", userController.logoutUser)
 
 router.put("/password/update", authorization, userController.changePassword)
-router.get("/password/forgot", userController.forgotPassword)
+router.put("/password/forgot", userController.forgotPassword)
+router.get("/password/reset/:token", userController.changePasswordByUrl)
 router.put("/profile/update", authorization, userController.updateSelfProfile)
 
 module.exports = router

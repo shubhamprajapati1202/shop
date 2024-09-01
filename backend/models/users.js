@@ -49,7 +49,7 @@ const usersSchema = mongoose.Schema({
         type: String
     },
     resetPasswordTokenExpire:{
-        type: String
+        type: Date
     }
 },
 {
@@ -57,7 +57,7 @@ const usersSchema = mongoose.Schema({
 })
 
 
-usersSchema.pre("save", async function(){
+usersSchema.pre("save", async function(next){
     if(!this.password){
         next()
     }
@@ -75,12 +75,12 @@ usersSchema.methods.generateToken = function(){
 }
 
 
-usersSchema.methods.generatePasswordToken = function(){
+usersSchema.methods.generateResetPasswordToken = function(){
     const resetToken = crypto.randomBytes(+process.env.CRYPTO_RANDOM_BYTES).toString("hex");
     const hashResetToken = crypto.createHash(process.env.CRYPTO_HASH_ALGO).update(resetToken).digest("hex")
 
     this.resetPasswordToken = hashResetToken
-    this.resetPasswordTokenExpire = new Date(Date.now() + 15*60*1000)
+    this.resetPasswordTokenExpire = Date.now() + 15*60*1000
 
     return resetToken
 }
