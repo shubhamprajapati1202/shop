@@ -2,6 +2,13 @@ const ErrorHandler = require("../helpers/errorHandler")
 const ResponseHandler = require("../helpers/responseHandler")
 const usersModel = require("../models/users")
 const theFunc = require("../helpers/asyncCatch")
+const cookieOption = {
+    // maxAge: 24*60*60*1000,
+    expires: new Date(Date.now() + process.env.COOKIE_EXPIRE*24*60*60*1000),
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict"
+}
 module.exports.usersList = (async(req, res, next) => {
     try{
         const dbResponse = await usersModel.find({});
@@ -127,7 +134,7 @@ module.exports.loginUser = (async(req, res, next)=>{
 
         const responseHandler = new ResponseHandler(200, "Login successfully", {token: accessToken});
 
-        return res.cookie("jwt", refreshToken, {maxAge: 24*60*60*1000}).send(responseHandler.generateResponse())
+        return res.cookie("jwt", refreshToken, cookieOption).send(responseHandler.generateResponse())
 
     }catch(error){
         next(new ErrorHandler(error))
@@ -209,6 +216,34 @@ module.exports.updateSelfProfile = (async(req, res, next)=>{
 
         const responseHandler = new ResponseHandler(200, "Profile successfully updated", dbResponse)
         return res.send(responseHandler.generateResponse())
+
+    }catch(error){
+        next(new ErrorHandler(error))
+    }
+})
+
+module.exports.forgotPassword = (async(req, res, next)=>{
+    try{
+        const email = req.body.email
+        let obj = {}
+
+        if(!email){
+            obj = { name: "ValidationError", message: "Email is required"}
+            throw obj
+        }
+
+        const dbResponse = await usersModel.findOne(email)
+
+        if(!dbResponse){
+            obj = { name: "BasRequest", message: "Enter your register email address."}
+            throw obj
+        }
+
+        const { accessToken }  = await dbResponse.generateToken()
+
+        
+
+        // const url = `http://localhost:port/`
 
     }catch(error){
         next(new ErrorHandler(error))

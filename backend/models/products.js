@@ -88,7 +88,11 @@ const productSchema = new mongoose.Schema({
                 type: String
             }
         }
-    ]
+    ],
+    added_by:{
+        type: mongoose.Schema.ObjectId,
+        ref:"users"
+    }
 },
 {
     timestamps: true

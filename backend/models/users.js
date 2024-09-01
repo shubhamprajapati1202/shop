@@ -2,6 +2,8 @@ const mongoose  = require("mongoose")
 const bcryptjs = require("bcryptjs");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto")
+
 const usersSchema = mongoose.Schema({
     name:{
         type: String,
@@ -43,6 +45,12 @@ const usersSchema = mongoose.Schema({
         enum: ["admin", "user"],
         default: "user"
     },
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordTokenExpire:{
+        type: String
+    }
 },
 {
     timestamps: true
@@ -66,5 +74,15 @@ usersSchema.methods.generateToken = function(){
     return {accessToken, refreshToken}
 }
 
+
+usersSchema.methods.generatePasswordToken = function(){
+    const resetToken = crypto.randomBytes(+process.env.CRYPTO_RANDOM_BYTES).toString("hex");
+    const hashResetToken = crypto.createHash(process.env.CRYPTO_HASH_ALGO).update(resetToken).digest("hex")
+
+    this.resetPasswordToken = hashResetToken
+    this.resetPasswordTokenExpire = new Date(Date.now() + 15*60*1000)
+
+    return resetToken
+}
 module.exports = mongoose.model("users", usersSchema, "users");
 

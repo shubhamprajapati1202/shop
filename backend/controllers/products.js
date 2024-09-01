@@ -7,6 +7,8 @@ const createProduct = (async(req, res, next) => {
     try{
 
         const bodyObj = req.body
+        bodyObj.added_by = req.user._id
+
         const dbResponse = await productModel(bodyObj).save()
 
         if(!dbResponse){
