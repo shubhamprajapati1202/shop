@@ -58,6 +58,14 @@ const usersSchema = mongoose.Schema({
 
 
 usersSchema.pre("save", async function(next){
+
+    // if(this.email){
+    //     const isExistEmail = mongoose.usersSchema.find({email: this.email})
+    //     if(isExistEmail){
+    //         throw new Error(`Try another email address.`)
+    //     }
+    // }
+
     if(!this.password){
         next()
     }
@@ -69,8 +77,8 @@ usersSchema.methods.comparePassword = function(plainPassword, cb){
 }
 
 usersSchema.methods.generateToken = function(){
-    const accessToken = jwt.sign({id: this._id}, process.env.JWT_ACCESS_TOKEN, {algorithm: process.env.JWT_ALGORITHM}, {expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE})
-    const refreshToken = jwt.sign({id: this._id}, process.env.JWT_REFRESH_TOKEN, {algorithm: process.env.JWT_ALGORITHM}, {expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRE})
+    const accessToken = jwt.sign({id: this._id}, process.env.JWT_ACCESS_TOKEN, {algorithm: process.env.JWT_ALGORITHM, expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRE})
+    const refreshToken = jwt.sign({id: this._id}, process.env.JWT_REFRESH_TOKEN, {algorithm: process.env.JWT_ALGORITHM, expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRE})
     return {accessToken, refreshToken}
 }
 
@@ -84,5 +92,7 @@ usersSchema.methods.generateResetPasswordToken = function(){
 
     return resetToken
 }
+
+
 module.exports = mongoose.model("users", usersSchema, "users");
 

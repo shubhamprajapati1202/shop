@@ -48,7 +48,7 @@ class ErrorHandler extends Error{
                 message = errorObj.message
             break;
             case "notFound" :
-                statusCode = statusCode;
+                statusCode = 404;
                 error_code = "DATA_NOT_FOUND";
                 msg = "Not Found";
                 message = errorObj.message;

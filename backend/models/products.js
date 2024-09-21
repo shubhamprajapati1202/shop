@@ -74,8 +74,12 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default:0
     },
-    review:[
+    reviews:[
         {
+            user:{
+                type: mongoose.Schema.ObjectId,
+                required: [true, "User id is required"]
+            },
             name:{
                 type: String,
                 required: [true, "User name is required"]

@@ -5,18 +5,30 @@ const usersModel = require("../models/users");
 module.exports.authorization = (async (req, res, next) => {
     try {
 
-        // const accessToken = req.headers["authorization"]?.split(" ")[1]
-        const accessToken = req.cookies.jwt
-        console.log(accessToken)
+        const accessToken = req.headers["authorization"]?.split(" ")[1]
+        const refreshToken = req.cookies.jwt
         let obj = {}
+
+        if(!refreshToken){
+            obj = { name: "unAuthorized", message: "Login to access this resource" }
+            throw obj
+        }
 
         if (!accessToken) {
             obj = { name: "unAuthorized", message: "Token is required to access this resource" }
             throw obj
         }
 
-        jwt.verify(accessToken, process.env.JWT_REFRESH_TOKEN, function (err, decode) {
+        jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN, function(err, decode) {
+            if(err){
+                obj = { name: "unAuthorized", message: "Invalid login token" }
+                throw obj
+            }
+        })
+
+        jwt.verify(accessToken, process.env.JWT_ACCESS_TOKEN, function (err, decode) {
             if (err) {
+                console.log(err)
                 obj = { name: "unAuthorized", message: "Invalid token" }
                 throw obj
             }
@@ -24,7 +36,7 @@ module.exports.authorization = (async (req, res, next) => {
         })
 
         req.user = await usersModel.findById(req.user)
-        console.log(req.user)
+        // console.log(req.user)
         next()
 
     } catch (error) {

@@ -268,15 +268,56 @@ module.exports.forgotPassword = (async(req, res, next)=>{
 module.exports.changePasswordByUrl = (async(req, res, next) => {
     try{
 
+        const newPassword = req.body.newPassword
+        const confirmPassword = req.body.confirmPassword
+
         const urlResetToken = req.params.token
         const hashToken = crypto.createHash(process.env.CRYPTO_HASH_ALGO).update(urlResetToken).digest("hex")
         let obj = {}
         const dbResponse = await usersModel.findOne({resetPasswordToken: hashToken, resetPasswordTokenExpire: {$gt: Date.now()}})
 
         if(!dbResponse){
-            obj = {}
+            obj = {name: "BasRequest", message: "This token has been expired or invalid."}
+            throw obj
         }
-        console.log(dbResponse)
+
+        if(!newPassword || !confirmPassword){
+            obj = {name: "ValidationError", message: "Password and confirm password is required."}
+            throw obj
+        }
+
+        if(newPassword.localeCompare(confirmPassword) != 0){
+            obj = {name: "ValidationError", message: "Password and confirm password cann't be match."}
+            throw obj            
+        }
+
+        dbResponse.password = newPassword
+        dbResponse.resetPasswordToken = undefined
+        dbResponse.resetPasswordTokenExpire = undefined
+
+        const updatedResponse = dbResponse.save()
+
+        if(!updatedResponse){
+            obj = { message: "You password could not be change currently. please try again later"}
+            throw obj            
+        }
+
+        const responseHandler = new ResponseHandler(200, 'Password successfully changed');
+        return res.send(responseHandler.generateResponse())
+
+    }catch(error){
+        return next(new ErrorHandler(error))
+    }
+})
+
+
+module.exports.getSelfProfile = (async(req, res, next) => {
+    try{
+        const id = req.user._id
+        const dbResponse = await usersModel.findById(id);
+
+        const responseHandler = new ResponseHandler(200, "Profile detail successfully fetched", dbResponse);
+        return res.send(responseHandler.generateResponse())
 
     }catch(error){
         return next(new ErrorHandler(error))
