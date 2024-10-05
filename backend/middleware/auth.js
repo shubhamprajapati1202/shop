@@ -50,7 +50,7 @@ module.exports.authorizeRoles = (...roles) => {
         try {
 
             if (!roles.includes(req.user.role)) {
-                const obj = { name: "unAuthorized", message: "Your are not authorized to access this resource." }
+                const obj = { name: "unAuthorized", message: `Your role '${req.user.role}' is not authorized to access this resource.` }
                 throw obj
             }
 

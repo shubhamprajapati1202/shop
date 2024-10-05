@@ -229,7 +229,6 @@ module.exports.forgotPassword = (async(req, res, next)=>{
     try{
         const email = req.body.email
         let obj = {}
-
         if(!email){
             obj = { name: "ValidationError", message: "Email is required"}
             throw obj
@@ -258,9 +257,11 @@ module.exports.forgotPassword = (async(req, res, next)=>{
         const responseHandler = new ResponseHandler(200, "We have send a link on your email", resetTokenUrl)
         return res.send(responseHandler.generateResponse())
     }catch(error){
-        dbResponse.resetPasswordToken = undefined
-        dbResponse.resetPasswordTokenExpire = undefined
-        await dbResponse.save({validateBeforeSave: false})
+        if(dbResponse){
+            dbResponse.resetPasswordToken = undefined
+            dbResponse.resetPasswordTokenExpire = undefined
+            await dbResponse.save({validateBeforeSave: false})
+        }
         next(new ErrorHandler(error))
     }
 })
@@ -295,7 +296,7 @@ module.exports.changePasswordByUrl = (async(req, res, next) => {
         dbResponse.resetPasswordToken = undefined
         dbResponse.resetPasswordTokenExpire = undefined
 
-        const updatedResponse = dbResponse.save()
+        const updatedResponse = await dbResponse.save()
 
         if(!updatedResponse){
             obj = { message: "You password could not be change currently. please try again later"}
